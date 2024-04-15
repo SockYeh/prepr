@@ -391,6 +391,15 @@ async def get_user_by_id(user_id: str, is_google_id: bool = False) -> UserModel:
     return UserModel(**op)
 
 
+async def update_user_session(user_id: str, access_token: str) -> bool:
+    """Updates the session data of a user."""
+    await users_db.auth_details.update_one(
+        {"_id": convert_to_bson_id(user_id)},
+        {"$set": {"google_data.access_token": access_token}},
+    )
+    return True
+
+
 async def create_problem(
     exam: str,
     difficulty: str,
