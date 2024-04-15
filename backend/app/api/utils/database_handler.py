@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 async def open_db() -> None:
-    global client, users_db
+    global client, users_db, problems_db
     client = AsyncIOMotorClient(connection_str)
     users_db = client.users
+    problems_db = client.problems
 
 
 async def close_db() -> None:
@@ -38,7 +39,7 @@ def switch_id_to_pydantic(data: dict) -> dict:
 
 
 class ProblemModel(pydantic.BaseModel):
-    id: str
+    id: ObjectId
 
     exam: str
     difficulty: str
@@ -232,6 +233,73 @@ async def create_user_db() -> None:
     logger.info("Username and Email index created successfully")
 
 
+async def create_problems_db() -> None:
+    await client.drop_database("problems")  # pyright: ignore
+    problems_validator = {
+        "$jsonSchema": {
+            "bsonType": "object",
+            "required": [
+                "exam",
+                "difficulty",
+                "type",
+                "subject",
+                "category",
+                "question",
+                "options",
+                "correct_answers",
+            ],
+            "properties": {
+                "exam": {
+                    "bsonType": "string",
+                    "description": "Exam for which the problem is",
+                },
+                "difficulty": {
+                    "bsonType": "string",
+                    "description": "Difficulty level of the problem",
+                },
+                "type": {
+                    "bsonType": "string",
+                    "description": "Type of the problem",
+                },
+                "subject": {
+                    "bsonType": "string",
+                    "description": "Subject of the problem",
+                },
+                "category": {
+                    "bsonType": "string",
+                    "description": "Category of the problem",
+                },
+                "question": {
+                    "bsonType": "string",
+                    "description": "Question of the problem",
+                },
+                "options": {
+                    "bsonType": "array",
+                    "description": "Options of the problem",
+                    "items": {
+                        "bsonType": "string",
+                    },
+                },
+                "correct_answers": {
+                    "bsonType": "array",
+                    "description": "Correct answers of the problem",
+                    "items": {
+                        "bsonType": "string",
+                    },
+                },
+            },
+        },
+    }
+
+    try:
+        await problems_db.create_collection("problems")
+    except Exception as e:
+        logger.error(e)
+    logger.info("Collection created successfully")
+
+    await problems_db.command("collMod", "problems", validator=problems_validator)
+
+
 async def create_google_user(
     username: str, email: str, profile_picture: str, google_data: dict
 ) -> bool:
@@ -263,3 +331,74 @@ async def get_user_by_id(user_id: str, is_google_id: bool = False) -> UserModel:
         raise ValueError("User not found")
     op = switch_id_to_pydantic(user)
     return UserModel(**op)
+
+
+async def create_problem(
+    exam: str,
+    difficulty: str,
+    type: str,
+    subject: str,
+    category: str,
+    question: str,
+    correct_answers: list[str],
+    options: list[str] = [],
+) -> ObjectId:
+    """Creates a problem."""
+    problem = {
+        "exam": exam,
+        "difficulty": difficulty,
+        "type": type,
+        "subject": subject,
+        "category": category,
+        "question": question,
+        "options": options,
+        "correct_answers": correct_answers,
+    }
+    result = await problems_db.problems.insert_one(problem)
+    return result.inserted_id
+
+
+async def get_problems(
+    subject: str | None = None,
+    type: str | None = None,
+    difficulty: str | None = None,
+    exam: str | None = None,
+) -> list[ProblemModel]:
+    """Gets problems based on the filters. All problems if no filters are provided."""
+    query = {}
+    if subject:
+        query["subject"] = subject
+    if type:
+        query["type"] = type
+    if difficulty:
+        query["difficulty"] = difficulty
+    if exam:
+        query["exam"] = exam
+    problems = problems_db.problems.find(query)
+    op = [switch_id_to_pydantic(problem) async for problem in problems]
+    return [ProblemModel(**problem) for problem in op]
+
+
+async def update_problem(problem_id: str, **kwargs) -> bool:
+    """Updates a problem."""
+    await problems_db.problems.update_one(
+        {"_id": convert_to_bson_id(problem_id)}, {"$set": kwargs}
+    )
+    return True
+
+
+async def get_problem(problem_id: str) -> ProblemModel:
+    """Gets a problem by its id."""
+    problem = await problems_db.problems.find_one(
+        {"_id": convert_to_bson_id(problem_id)}
+    )
+    if not problem:
+        raise ValueError("Problem not found")
+    op = switch_id_to_pydantic(problem)
+    return ProblemModel(**op)
+
+
+async def delete_problem(problem_id: str) -> bool:
+    """Deletes a problem."""
+    await problems_db.problems.delete_one({"_id": convert_to_bson_id(problem_id)})
+    return True
