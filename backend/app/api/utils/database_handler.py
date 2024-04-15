@@ -99,6 +99,8 @@ class ProblemModel(pydantic.BaseModel):
             raise ValueError("Invalid exam")
         return v
 
+    model_config = {"arbitrary_types_allowed": True}
+
 
 class ProblemsModel(pydantic.BaseModel):
     problems_solved: list[ProblemModel]
