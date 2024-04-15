@@ -74,28 +74,28 @@ class ProblemModel(pydantic.BaseModel):
             raise ValueError("Correct answer not in options")
         return values
 
-    @pydantic.validator("difficulty")
+    @pydantic.field_validator("difficulty")
     @classmethod
     def validate_difficulty(cls, v):
         if v not in ["easy", "medium", "hard"]:
             raise ValueError("Invalid difficulty")
         return v
 
-    @pydantic.validator("type")
+    @pydantic.field_validator("type")
     @classmethod
     def validate_type(cls, v):
         if v not in ["single", "multiple", "integer"]:
             raise ValueError("Invalid type")
         return v
 
-    @pydantic.validator("subject")
+    @pydantic.field_validator("subject")
     @classmethod
     def validate_subject(cls, v):
         if v not in ["mathematics", "physics", "chemistry", "zoology", "botany"]:
             raise ValueError("Invalid subject")
         return v
 
-    @pydantic.validator("exam")
+    @pydantic.field_validator("exam")
     @classmethod
     def validate_exam(cls, v):
         if v not in ["jee", "neet"]:

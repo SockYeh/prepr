@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 def convert_bsonid_to_string(obj: dict) -> dict:
-
     obj["_id"] = str(obj["_id"])
     obj["comments"] = [str(i) for i in obj["comments"]]
     return obj
