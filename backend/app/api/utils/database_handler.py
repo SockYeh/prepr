@@ -39,7 +39,13 @@ def switch_id_to_pydantic(data: dict) -> dict:
 
 class ProblemModel(pydantic.BaseModel):
     id: str
+
+    exam: str
     difficulty: str
+    type: str
+    subject: str
+    category: str
+
     question: str
     options: list[str] | None
     correct_answers: list[str]
@@ -69,6 +75,27 @@ class ProblemModel(pydantic.BaseModel):
     def validate_difficulty(cls, v):
         if v not in ["easy", "medium", "hard"]:
             raise ValueError("Invalid difficulty")
+        return v
+
+    @pydantic.validator("type")
+    @classmethod
+    def validate_type(cls, v):
+        if v not in ["single", "multiple", "integer"]:
+            raise ValueError("Invalid type")
+        return v
+
+    @pydantic.validator("subject")
+    @classmethod
+    def validate_subject(cls, v):
+        if v not in ["mathematics", "physics", "chemistry", "zoology", "botany"]:
+            raise ValueError("Invalid subject")
+        return v
+
+    @pydantic.validator("exam")
+    @classmethod
+    def validate_exam(cls, v):
+        if v not in ["jee", "neet"]:
+            raise ValueError("Invalid exam")
         return v
 
 
