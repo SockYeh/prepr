@@ -98,8 +98,8 @@ class UserModel(pydantic.BaseModel):
     username: str
     email: str
     profile_picture: str
-    problems: ProblemsModel
-    ranking: RankingModel
+    problems: list[ObjectId] = []
+    ranking: RankingModel = RankingModel(rating=0, rank=0)
     is_google: bool
     google_data: GoogleData
 
@@ -131,23 +131,23 @@ async def create_user_db() -> None:
                     "properties": {
                         "problems_solved": {
                             "bsonType": "array",
-                            "description": "List of problems solved by the user",
+                            "description": "List of ids of problems solved by the user",
                             "items": {
-                                "bsonType": "object",
+                                "bsonType": "objectId",
                             },
                         },
                         "problems_attempted": {
                             "bsonType": "array",
-                            "description": "List of problems attempted by the user",
+                            "description": "List of ids of problems attempted by the user",
                             "items": {
-                                "bsonType": "object",
+                                "bsonType": "objectId",
                             },
                         },
                         "problems_bookmarked": {
                             "bsonType": "array",
-                            "description": "List of problems bookmarked by the user",
+                            "description": "List of ids of problems bookmarked by the user",
                             "items": {
-                                "bsonType": "object",
+                                "bsonType": "objectId",
                             },
                         },
                     },
