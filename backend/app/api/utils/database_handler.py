@@ -469,3 +469,70 @@ async def delete_problem(problem_id: str) -> bool:
     """Deletes a problem."""
     await problems_db.problems.delete_one({"_id": convert_to_bson_id(problem_id)})
     return True
+
+
+async def create_comment(user: str, comment: str, problem: str) -> ObjectId:
+    """Creates a comment."""
+    commentd = {
+        "user": convert_to_bson_id(user),
+        "comment": comment,
+        "problem": convert_to_bson_id(problem),
+        "likes": 0,
+    }
+    result = await comments_db.comments.insert_one(commentd)
+    return result.inserted_id
+
+
+async def get_comments(problem_id: str) -> list[CommentModel]:
+    """Gets comments on a problem."""
+    comments = comments_db.comments.find({"problem": convert_to_bson_id(problem_id)})
+    op = [switch_id_to_pydantic(comment) async for comment in comments]
+    return [CommentModel(**comment) for comment in op]
+
+
+async def like_comment(comment_id: str) -> bool:
+    """Likes a comment."""
+    await comments_db.comments.update_one(
+        {"_id": convert_to_bson_id(comment_id)}, {"$inc": {"likes": 1}}
+    )
+    return True
+
+
+async def delete_comment(comment_id: str) -> bool:
+    """Deletes a comment."""
+    await comments_db.comments.delete_one({"_id": convert_to_bson_id(comment_id)})
+    return True
+
+
+async def get_user_comments(user_id: str) -> list[CommentModel]:
+    """Gets comments by a user."""
+    comments = comments_db.comments.find({"user": convert_to_bson_id(user_id)})
+    op = [switch_id_to_pydantic(comment) async for comment in comments]
+    return [CommentModel(**comment) for comment in op]
+
+
+async def get_comment(comment_id: str) -> CommentModel:
+    """Gets a comment by its id."""
+    comment = await comments_db.comments.find_one(
+        {"_id": convert_to_bson_id(comment_id)}
+    )
+    if not comment:
+        raise ValueError("Comment not found")
+    op = switch_id_to_pydantic(comment)
+    return CommentModel(**op)
+
+
+async def dislike_comment(comment_id: str) -> bool:
+    """Dislikes a comment."""
+    await comments_db.comments.update_one(
+        {"_id": convert_to_bson_id(comment_id)}, {"$inc": {"likes": -1}}
+    )
+    return True
+
+
+async def update_comment(comment_id: str, **kwargs) -> bool:
+    """Updates a comment."""
+    await comments_db.comments.update_one(
+        {"_id": convert_to_bson_id(comment_id)}, {"$set": kwargs}
+    )
+    return True
