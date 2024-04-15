@@ -16,10 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 async def open_db() -> None:
-    global client, users_db, problems_db
+    global client, users_db, problems_db, comments_db
     client = AsyncIOMotorClient(connection_str)
     users_db = client.users
     problems_db = client.problems
+    comments_db = client.comments
 
 
 async def close_db() -> None:
@@ -50,6 +51,8 @@ class ProblemModel(pydantic.BaseModel):
     question: str
     options: list[str] | None
     correct_answers: list[str]
+
+    comments: list[ObjectId] = []
 
     @pydantic.field_validator("options")
     @classmethod
@@ -132,6 +135,16 @@ class UserModel(pydantic.BaseModel):
     ranking: RankingModel = RankingModel(rating=0, rank=0)
     is_google: bool
     google_data: GoogleData
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class CommentModel(pydantic.BaseModel):
+    id: ObjectId
+    user: ObjectId
+    comment: str
+    problem: ObjectId
+    likes: int = 0
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -289,6 +302,13 @@ async def create_problems_db() -> None:
                         "bsonType": "string",
                     },
                 },
+                "comments": {
+                    "bsonType": "array",
+                    "description": "Comments on the problem",
+                    "items": {
+                        "bsonType": "objectId",
+                    },
+                },
             },
         },
     }
@@ -300,6 +320,42 @@ async def create_problems_db() -> None:
     logger.info("Collection created successfully")
 
     await problems_db.command("collMod", "problems", validator=problems_validator)
+
+
+async def create_comments_db() -> None:
+    await client.drop_database("comments")  # pyright: ignore
+    comments_validator = {
+        "$jsonSchema": {
+            "bsonType": "object",
+            "required": ["user", "comment", "problem"],
+            "properties": {
+                "user": {
+                    "bsonType": "objectId",
+                    "description": "User who commented",
+                },
+                "comment": {
+                    "bsonType": "string",
+                    "description": "Comment by the user",
+                },
+                "problem": {
+                    "bsonType": "objectId",
+                    "description": "Problem on which the comment is",
+                },
+                "likes": {
+                    "bsonType": "int",
+                    "description": "Likes on the comment",
+                },
+            },
+        },
+    }
+
+    try:
+        await comments_db.create_collection("comments")
+    except Exception as e:
+        logger.error(e)
+    logger.info("Collection created successfully")
+
+    await comments_db.command("collMod", "comments", validator=comments_validator)
 
 
 async def create_google_user(

@@ -5,7 +5,13 @@ from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
 from .routes import auth
-from .utils.database_handler import close_db, open_db, create_user_db
+from .utils.database_handler import (
+    close_db,
+    open_db,
+    create_user_db,
+    create_problems_db,
+    create_comments_db,
+)
 
 
 @asynccontextmanager
