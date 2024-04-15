@@ -1,9 +1,10 @@
 import aiohttp, os, logging
 from dotenv import load_dotenv, find_dotenv
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status, Request, Depends
 from fastapi.responses import JSONResponse
 from starlette.responses import RedirectResponse
-from ..utils.database_handler import create_google_user, get_user_by_id
+from ..utils.database_handler import create_google_user, get_user_by_id, UserModel
+from ..utils.session_handler import is_logged_in
 
 load_dotenv(find_dotenv())
 
@@ -13,6 +14,15 @@ GOOGLE_REDIRECT_URI = os.environ["GOOGLE_REDIRECT_URI"]
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
+
+
+def convert_bsonid_to_str(obj: dict) -> dict:
+    obj["_id"] = str(obj["_id"])
+    probs = obj["problems"].keys()
+    for typ in probs:
+        obj["problems"][typ] = [str(i) for i in obj["problems"][typ]]
+
+    return obj
 
 
 @router.get("/google", response_class=RedirectResponse)
@@ -69,3 +79,18 @@ async def google_callback(request: Request, code: str):
         user = await get_user_by_id(_id, is_google_id=True)
         request.session["user_id"] = str(user.id)
         return resp
+
+
+@router.get(
+    "/logout", response_class=RedirectResponse, dependencies=[Depends(is_logged_in)]
+)
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/")
+
+
+@router.get("/me", response_class=JSONResponse, dependencies=[Depends(is_logged_in)])
+async def get_me(request: Request):
+    user = await get_user_by_id(request.session["user_id"])
+
+    return JSONResponse(content=convert_bsonid_to_str(user.model_dump()))
