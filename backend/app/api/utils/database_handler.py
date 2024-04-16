@@ -4,6 +4,7 @@ import logging
 import pydantic
 from pymongo import errors
 from bson.objectid import ObjectId
+from bson.errors import InvalidId
 from dotenv import load_dotenv, find_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from email_validator import validate_email, EmailNotValidError
@@ -40,7 +41,7 @@ def switch_id_to_pydantic(data: dict) -> dict:
 
 
 class ProblemModel(pydantic.BaseModel):
-    id: ObjectId
+    id: str
 
     exam: str
     difficulty: str
@@ -52,7 +53,7 @@ class ProblemModel(pydantic.BaseModel):
     options: list[str] | None
     correct_answers: list[str]
 
-    comments: list[ObjectId] = []
+    comments: list[str] = []
 
     @pydantic.field_validator("options")
     @classmethod
@@ -102,6 +103,15 @@ class ProblemModel(pydantic.BaseModel):
             raise ValueError("Invalid exam")
         return v
 
+    @pydantic.field_validator("id")
+    @classmethod
+    def validate_id(cls, v):
+        try:
+            ObjectId(v)
+        except InvalidId:
+            raise ValueError("Invalid id")
+        return v
+
     model_config = {"arbitrary_types_allowed": True}
 
 
@@ -127,23 +137,32 @@ class GoogleData(pydantic.BaseModel):
 
 
 class UserModel(pydantic.BaseModel):
-    id: ObjectId
+    id: str
     username: str
     email: str
     profile_picture: str
-    problems: list[ObjectId] = []
+    problems: list[str] = []
     ranking: RankingModel = RankingModel(rating=0, rank=0)
     is_google: bool
     google_data: GoogleData
+
+    @pydantic.field_validator("id")
+    @classmethod
+    def validate_id(cls, v):
+        try:
+            ObjectId(v)
+        except InvalidId:
+            raise ValueError("Invalid id")
+        return v
 
     model_config = {"arbitrary_types_allowed": True}
 
 
 class CommentModel(pydantic.BaseModel):
-    id: ObjectId
-    user: ObjectId
+    id: str
+    user: str
     comment: str
-    problem: ObjectId
+    problem: str
     likes: int = 0
 
     model_config = {"arbitrary_types_allowed": True}

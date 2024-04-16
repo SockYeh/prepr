@@ -16,15 +16,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
 
 
-def convert_bsonid_to_str(obj: dict) -> dict:
-    obj["_id"] = str(obj["_id"])
-    probs = obj["problems"].keys()
-    for typ in probs:
-        obj["problems"][typ] = [str(i) for i in obj["problems"][typ]]
-
-    return obj
-
-
 @router.get("/google", response_class=RedirectResponse)
 async def google_login(request: Request) -> RedirectResponse:
     return RedirectResponse(
@@ -93,4 +84,4 @@ async def logout(request: Request):
 async def get_me(request: Request):
     user = await get_user_by_id(request.session["user_id"])
 
-    return JSONResponse(content=convert_bsonid_to_str(user.model_dump()))
+    return JSONResponse(content=(user.model_dump()))

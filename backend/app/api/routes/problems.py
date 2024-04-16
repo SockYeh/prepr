@@ -15,14 +15,8 @@ from ..utils.session_handler import is_admin
 
 load_dotenv(find_dotenv())
 
-router = APIRouter(prefix="/problems", tags=["problems", "questions"])
+router = APIRouter(prefix="/problems", tags=["problems"])
 logger = logging.getLogger(__name__)
-
-
-def convert_bsonid_to_string(obj: dict) -> dict:
-    obj["_id"] = str(obj["_id"])
-    obj["comments"] = [str(i) for i in obj["comments"]]
-    return obj
 
 
 @router.get("/", response_class=JSONResponse, status_code=status.HTTP_200_OK)
@@ -35,11 +29,7 @@ async def get_problems_ep(
 ):
     problems = await get_problems(subject, type, difficulty, exam)
     return JSONResponse(
-        content={
-            "problems": [
-                convert_bsonid_to_string(problem.model_dump()) for problem in problems
-            ]
-        }
+        content={"problems": [(problem.model_dump()) for problem in problems]}
     )
 
 
@@ -70,9 +60,7 @@ async def update_problem_ep(request: Request, problem_id: str, problem: ProblemM
 )
 async def get_problem_ep(request: Request, problem_id: str):
     problem = await get_problem(problem_id)
-    return JSONResponse(
-        content={"problem": convert_bsonid_to_string(problem.model_dump())}
-    )
+    return JSONResponse(content={"problem": (problem.model_dump())})
 
 
 @router.delete(

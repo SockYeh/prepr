@@ -1,6 +1,6 @@
 import aiohttp, os, logging
 from dotenv import load_dotenv, find_dotenv
-from ..utils.database_handler import get_user_by_id, update_user_session
+from .database_handler import get_user_by_id, update_user_session
 
 load_dotenv(find_dotenv())
 
