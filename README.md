@@ -1,3 +1,5 @@
+![](banner.png)
+
 # prepr
 A platform to prepare for (and ace!) competitive exams like JEE, NEET, and soon to be more!
 
