@@ -83,4 +83,3 @@ async def get_problem_ep(request: Request, problem_id: str):
 )
 async def delete_problem_ep(request: Request, problem_id: str):
     op = await delete_problem(problem_id)
-    return JSONResponse(content={"message": f"Problem deleted with ID: {op}"})
