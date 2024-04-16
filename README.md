@@ -12,6 +12,11 @@ We are an online resource to help students excel in their preparation for variou
 - Leaderboard to compare your performance with others
 - Daily questions to keep you on your toes
 
+## Made With
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![Love](http://forthebadge.com/images/badges/built-with-love.svg)
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
