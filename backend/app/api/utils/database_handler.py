@@ -35,7 +35,7 @@ def convert_to_bson_id(bson_id: str) -> ObjectId:
 
 def switch_id_to_pydantic(data: dict) -> dict:
     """Switches the id key to _id for pydantic models."""
-    data["id"] = data["_id"]
+    data["id"] = str(data["_id"])
     del data["_id"]
     return data
 
@@ -407,6 +407,7 @@ async def get_user_by_id(user_id: str, is_google_id: bool = False) -> UserModel:
     if not user:
         raise ValueError("User not found")
     op = switch_id_to_pydantic(user)
+
     return UserModel(**op)
 
 
