@@ -429,6 +429,7 @@ async def create_problem(
     question: str,
     correct_answers: list[str],
     options: list[str] = [],
+    comments: list[str] = [],
 ) -> ObjectId:
     """Creates a problem."""
     problem = {
@@ -440,6 +441,7 @@ async def create_problem(
         "question": question,
         "options": options,
         "correct_answers": correct_answers,
+        "comments": comments,
     }
     result = await problems_db.problems.insert_one(problem)
     return result.inserted_id
