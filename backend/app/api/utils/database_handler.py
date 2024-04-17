@@ -441,7 +441,7 @@ async def create_problem(
         "question": question,
         "options": options,
         "correct_answers": correct_answers,
-        "comments": comments,
+        "comments": [convert_to_bson_id(comment) for comment in comments],
     }
     result = await problems_db.problems.insert_one(problem)
     return result.inserted_id
@@ -470,6 +470,10 @@ async def get_problems(
 
 async def update_problem(problem_id: str, **kwargs) -> bool:
     """Updates a problem."""
+    comments = kwargs.get("comments")
+    if comments:
+        kwargs["comments"] = [convert_to_bson_id(comment) for comment in comments]
+
     await problems_db.problems.update_one(
         {"_id": convert_to_bson_id(problem_id)}, {"$set": kwargs}
     )
